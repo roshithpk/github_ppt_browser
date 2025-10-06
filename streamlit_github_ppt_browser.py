@@ -115,12 +115,12 @@ with st.sidebar:
 
 
     col1, col2 = st.columns(2)
-    #with col1:
-    #    owner_input = st.text_input("Owner (user or org)")
-    #    repo_input = st.text_input("Repo")
-    #with col2:
-    #    branch_input = st.text_input("Branch", value="main")
-    #    path_input = st.text_input("Path inside repo (leave empty for root)")
+    with col1:
+        owner_input = st.text_input("Owner (user or org)")
+        repo_input = st.text_input("Repo")
+    with col2:
+        branch_input = st.text_input("Branch", value="main")
+        path_input = st.text_input("Path inside repo (leave empty for root)")
 
     st.markdown("---")
     st.markdown("Personal Access Token (optional):\nUse if repo is private or to increase rate limits.")
