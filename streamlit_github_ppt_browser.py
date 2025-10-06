@@ -110,12 +110,8 @@ st.title("GitHub PPT Browser — list & download PPT files from a repo directory
 with st.sidebar:
     st.header("Repo / Directory settings")
     # 👇 Default GitHub URL for your PPT folder
-    DEFAULT_GITHUB_URL = "https://github.com/roshithpk/github_ppt_browser/tree/main/presentations"
-    
-    github_url = st.text_input(
-        "GitHub directory URL (change if needed)",
-        value=DEFAULT_GITHUB_URL
-    )
+    github_url = st.text_input("GitHub directory URL (e.g. https://github.com/owner/repo/tree/branch/path)")
+
 
 
     col1, col2 = st.columns(2)
