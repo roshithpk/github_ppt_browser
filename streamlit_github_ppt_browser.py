@@ -1,11 +1,10 @@
 """
-Streamlit app: GitHub PPT Browser (User-entered URL)
+Streamlit app: GitHub PPT Browser (Sidebar URL input, Download only)
 
 Features:
-- User pastes a GitHub folder URL into the app.
-- Lists .ppt/.pptx files in that folder (optionally recursive).
-- Download button for each file.
-- Open-in-browser preview via Microsoft Office Online viewer (and optional inline iframe preview).
+- GitHub folder URL is entered in the sidebar (left side).
+- Lists .ppt/.pptx files in that folder (optional recursive search).
+- Provides a Download button for each file (no preview).
 - Optional GitHub Personal Access Token for private repos / higher rate limits.
 
 Run:
@@ -15,7 +14,7 @@ Run:
 
 import requests
 import streamlit as st
-from urllib.parse import urlparse, quote_plus
+from urllib.parse import urlparse
 from typing import List, Dict, Optional
 
 PPT_EXTS = (".ppt", ".pptx", ".pptm", ".pot", ".potx", ".pps", ".ppsx")
@@ -98,22 +97,20 @@ def walk_and_collect_ppts(owner: str, repo: str, start_path: str, branch: str, t
 # ----------------------------- Streamlit UI -----------------------------
 
 st.set_page_config(page_title="GitHub PPT Browser", layout="wide")
-st.title("GitHub PPT Browser — paste a GitHub folder URL")
+st.title("GitHub PPT Browser — paste a GitHub folder URL (sidebar)")
 
-st.markdown("Paste a GitHub folder URL that contains PowerPoint files (e.g., `https://github.com/owner/repo/tree/main/presentations`).")
-
-github_url = st.text_input("GitHub folder URL")
-
+# Sidebar inputs (left side)
 with st.sidebar:
-    st.header("Options")
-    token = st.text_input("GitHub token (PAT - optional)", type="password")
+    st.header("Repository settings")
+    github_url = st.text_input("GitHub folder URL", help="e.g. https://github.com/owner/repo/tree/main/presentations")
+    token = st.text_input("GitHub token (PAT - optional)", type="password", help="Needed for private repos or higher rate limits")
     show_all_levels = st.checkbox("Search recursively (include subdirectories)", value=False)
-    inline_preview = st.checkbox("Attempt inline preview (iframe)", value=True)
     list_btn = st.button("List PPT files")
 
+# Main area: results will appear here
 if list_btn:
     if not github_url:
-        st.error("Please paste a GitHub folder URL.")
+        st.error("Please enter the GitHub folder URL in the left sidebar.")
     else:
         parsed = parse_github_dir_url(github_url)
         if not parsed:
@@ -123,6 +120,10 @@ if list_btn:
             repo = parsed['repo']
             branch = parsed.get('branch','main')
             path = parsed.get('path','')
+
+            st.subheader(f"Repository: {owner}/{repo}  (branch: {branch})")
+            if path:
+                st.caption(f"Path: {path}")
 
             with st.spinner("Fetching files from GitHub..."):
                 try:
@@ -137,13 +138,11 @@ if list_btn:
                     else:
                         st.success(f"Found {len(files)} PPT file(s)")
                         for f in files:
-                            c1, c2, c3 = st.columns([4,1,3])
+                            c1, c2 = st.columns([5,2])
                             with c1:
-                                st.markdown(f"**[{f['name']}]({f.get('html_url')})**")
+                                st.markdown(f"**{f['name']}**")
                                 st.caption(f"Path: {f.get('path')}")
                             with c2:
-                                st.write(f"{f.get('size',0):,} bytes")
-                            with c3:
                                 download_url = f.get('download_url')
                                 if download_url:
                                     try:
@@ -152,20 +151,6 @@ if list_btn:
                                         st.download_button(label="Download", data=r.content, file_name=f['name'], mime="application/vnd.ms-powerpoint")
                                     except Exception as e:
                                         st.error(f"Failed to fetch file for download: {e}")
-
-                                # Preview via Office Online
-                                if download_url:
-                                    viewer = f"https://view.officeapps.live.com/op/view.aspx?src={quote_plus(download_url)}"
-                                    if inline_preview:
-                                        try:
-                                            st.markdown("<details><summary>Preview (expand)</summary>", unsafe_allow_html=True)
-                                            iframe = f'<iframe src="{viewer}" width="100%" height="600px" frameborder="0"></iframe>'
-                                            st.components.v1.html(iframe, height=600, scrolling=True)
-                                            st.markdown("</details>", unsafe_allow_html=True)
-                                        except Exception:
-                                            st.markdown(f"[Open preview in new tab]({viewer})")
-                                    else:
-                                        st.markdown(f"[Open preview in new tab]({viewer})")
 
                 except requests.HTTPError as he:
                     status = getattr(he.response, 'status_code', None)
@@ -179,4 +164,4 @@ if list_btn:
                     st.error(f"Unexpected error: {e}")
 
 st.markdown("---")
-st.write("Built with ❤️ — Streamlit")
+st.write("Built by Roshith")
